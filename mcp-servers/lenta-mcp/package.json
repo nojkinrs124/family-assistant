@@ -1,0 +1,19 @@
+{
+  "name": "lenta-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP-сервер для Ленты: поиск, корзина, ссылка на чекаут (браузерная автоматизация с переиспользуемой сессией)",
+  "type": "module",
+  "bin": {
+    "lenta-mcp": "./src/index.js"
+  },
+  "scripts": {
+    "auth": "node src/auth.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "playwright": "^1.47.0",
+    "zod": "^3.23.8"
+  }
+}
