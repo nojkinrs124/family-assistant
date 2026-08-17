@@ -58,24 +58,37 @@ DevTools (см. `docs/architecture.md` → "Известные ограниче�
 ```bash
 cd telegram-bot
 npm install
-cp .env.example .env    # вписать TELEGRAM_BOT_TOKEN и ANTHROPIC_API_KEY
+cp .env.example .env
+# вписать: TELEGRAM_BOT_TOKEN, ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 npm start
 ```
 
+При `/start` бот сам создаёт профиль по `telegram_id` и, если семьи ещё
+нет, создаёт её и назначает пользователя владельцем (`owner`) — вручную
+ничего заводить не нужно.
+
 ## Статус / что дальше
 
-- [x] Этап 1: миграция фундамента (families, profiles, family_members, RLS)
+- [x] Этап 1: миграция фундамента (families, profiles, family_members, settings, audit_logs, RLS)
+- [x] Telegram `/start`: автосоздание профиля и семьи, запись действий в audit_logs
 - [x] Lenta MCP: каркас (search / cart_add / checkout_link) — селекторы TODO
 - [x] Telegram-бот: Shopping Agent с tool-calling поверх MCP
 - [ ] Доработать реальные селекторы Ленты (нужен доступ к живому сайту)
 - [ ] Проверить экран оплаты (SMS/3-D Secure или в один клик)
+- [ ] Приглашение других участников семьи (второй пользователь в `family_members`)
 - [ ] Этап 2: shopping_lists, orders, stores — таблицы и связка с MCP
 - [ ] Этап 3: finance (accounts, transactions, budgets, savings_goals)
 - [ ] Этап 4: карты/автооплата (реальный эквайринг)
+
+Подробный план по шагам — в `docs/roadmap.md`.
 
 ## Безопасность
 
 - `session-state.json` (сохранённая сессия Ленты) — секрет уровня пароля,
   никогда не коммитится (см. `.gitignore`), в проде — Supabase Vault.
+- `SUPABASE_SERVICE_ROLE_KEY` обходит RLS — живёт только в `.env` на
+  сервере бота, никогда не в клиентском коде и не в git.
 - `.env` с токенами — не коммитится.
 - RLS включён на всех таблицах с первой миграции.
+- Карта оплаты нигде в этом репозитории не хранится — оплата всегда
+  завершается пользователем вручную в интерфейсе магазина.

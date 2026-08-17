@@ -32,7 +32,7 @@ export async function runShoppingAgent(userMessage) {
 
   for (let step = 0; step < 12; step++) { // maxSteps — защита от зацикливания
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-5',
       max_tokens: 1500,
       system: SYSTEM_PROMPT,
       tools: anthropicTools,

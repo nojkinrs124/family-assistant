@@ -2,4 +2,3 @@ node_modules/
 .env
 *.log
 mcp-servers/lenta-mcp/session-state.json
-package-lock.json
