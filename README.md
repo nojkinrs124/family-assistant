@@ -34,7 +34,7 @@ docs/                       — заметки по архитектуре и р
 ## Развёрнутая инфраструктура
 
 - Supabase-проект: `family-assistant` (`ofoxcgswiucxatmtjgsz`), организация `nojkinrs124`, регион `ap-southeast-1`
-- Миграции 0001–0004 (фундамент, security hardening, схема покупок, seed магазинов) применены, security-линтер Supabase чист (`get_advisors` → 0 замечаний)
+- Миграции 0001–0007 (фундамент, покупки, финансы, security/performance hardening) применены, security-линтер Supabase чист (`get_advisors` → 0 замечаний)
 - GitHub: `github.com/nojkinrs124/family-assistant` (приватный)
 
 ## Быстрый старт
@@ -84,7 +84,7 @@ npm start
 - [ ] Приглашение других участников семьи (второй пользователь в `family_members`)
 - [x] Этап 2 схема: shopping_lists, orders, stores, store_integrations — применены к проду
 - [ ] Этап 2 автоматизация: калибровка селекторов Ленты (блокер, нужен живой браузер)
-- [ ] Этап 3: finance (accounts, transactions, budgets, savings_goals)
+- [x] Этап 3 схема: accounts, categories (13 seed), transactions, budgets, savings_goals — применены к проду
 - [ ] Этап 4: карты/автооплата (реальный эквайринг)
 
 Подробный план по шагам — в `docs/roadmap.md`.
