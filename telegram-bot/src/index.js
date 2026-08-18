@@ -4,7 +4,7 @@ import { initMcpPool } from './mcpPool.js';
 import { runShoppingAgent } from './agent.js';
 import { getOrCreateProfile, getActiveFamily, createFamilyWithOwner, writeAuditLog } from './family.js';
 
-const requiredEnv = ['TELEGRAM_BOT_TOKEN', 'ANTHROPIC_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const requiredEnv = ['TELEGRAM_BOT_TOKEN', 'OPENROUTER_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
 for (const key of requiredEnv) {
   if (!process.env[key]) {
     console.error(`Не задана переменная окружения: ${key} (см. .env.example)`);

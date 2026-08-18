@@ -65,7 +65,7 @@ DevTools (см. `docs/architecture.md` → "Известные ограниче�
 cd telegram-bot
 npm install
 cp .env.example .env
-# вписать: TELEGRAM_BOT_TOKEN, ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+# вписать: TELEGRAM_BOT_TOKEN, OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 npm start
 ```
 
