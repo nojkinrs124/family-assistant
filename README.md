@@ -31,6 +31,12 @@ telegram-bot/               — Telegram-бот + Shopping Agent
 docs/                       — заметки по архитектуре и решениям
 ```
 
+## Развёрнутая инфраструктура
+
+- Supabase-проект: `family-assistant` (`ofoxcgswiucxatmtjgsz`), организация `nojkinrs124`, регион `ap-southeast-1`
+- Миграции `0001_stage1_foundation.sql` и `0002_security_hardening.sql` применены, security-линтер Supabase чист (`get_advisors` → 0 замечаний)
+- GitHub: `github.com/nojkinrs124/family-assistant` (приватный)
+
 ## Быстрый старт
 
 ### 1. Supabase
