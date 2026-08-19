@@ -1,101 +1,114 @@
-# Family Assistant
+# 🛒 Семейный помощник — Telegram-бот для заказа продуктов
 
-Личный семейный ассистент: Telegram-бот, который понимает обычный язык
-("купи молоко и хлеб"), сам собирает корзину в магазинах и ведёт
-семейный учёт — покупки, финансы, накопления. Supabase — ядро данных,
-MCP-серверы — модули-адаптеры под конкретные магазины.
-
-## Архитектура
+Напиши боту что купить — он сам найдёт товары в **Ленте** и пришлёт ссылку на готовую корзину. Тебе останется только оплатить.
 
 ```
-Telegram ──► Shopping Agent (Claude, tool-calling)
-                    │
-                    ├── lenta-mcp        (наш, Playwright + сохранённая сессия)
-                    └── vkusvill-mcp     (официальный, mcp.vkusvill.ru — когда
-                                          семья окажется в городе с ВкусВиллом)
-                    │
-             Supabase (Postgres + RLS)
-                    │
-        families / profiles / family_members /
-        orders / transactions / shopping_lists / ...
+Ты: «Купи молоко, хлеб и яйца»
+Бот: «Готово! Вот ссылка на корзину → [открыть]»
 ```
 
-Подробности решений — в `docs/architecture.md`.
+> Бот **никогда не списывает деньги сам** — только ты нажимаешь «Оплатить».
 
-## Структура репозитория
+---
+
+## Как это работает
 
 ```
-supabase/migrations/       — SQL-миграции (Этап 1: фундамент)
-mcp-servers/lenta-mcp/      — MCP-сервер для Ленты (браузерная автоматизация)
-telegram-bot/               — Telegram-бот + Shopping Agent
-docs/                       — заметки по архитектуре и решениям
+Ты пишешь в Telegram
+        ↓
+ИИ понимает что нужно купить
+        ↓
+Бот открывает сайт Ленты, находит товары, добавляет в корзину
+        ↓
+Присылает тебе ссылку — ты оплачиваешь сам
 ```
 
-## Развёрнутая инфраструктура
+---
 
-- Supabase-проект: `family-assistant` (`ofoxcgswiucxatmtjgsz`), организация `nojkinrs124`, регион `ap-southeast-1`
-- Миграции 0001–0007 (фундамент, покупки, финансы, security/performance hardening) применены, security-линтер Supabase чист (`get_advisors` → 0 замечаний)
-- GitHub: `github.com/nojkinrs124/family-assistant` (приватный)
+## Что нужно для запуска
+
+| Что | Где взять | Цена |
+|-----|-----------|------|
+| VPS-сервер (Ubuntu 22.04, 1–2 GB RAM) | [REG.RU](https://www.reg.ru/vps/) · [Selectel](https://selectel.ru/services/cloud/servers/) · [Timeweb](https://timeweb.cloud/vps) | ~300–500 ₽/мес |
+| Telegram-бот | [@BotFather](https://t.me/BotFather) | Бесплатно |
+| Аккаунт OpenRouter (ИИ) | [openrouter.ai](https://openrouter.ai) | ~$5 надолго |
+| Аккаунт Supabase (база данных) | [supabase.com](https://supabase.com) | Бесплатно |
+| Аккаунт в Ленте | [online.lenta.com](https://online.lenta.com) | Бесплатно |
+| Docker на сервере | [Инструкция по установке](https://docs.docker.com/engine/install/ubuntu/) | Бесплатно |
+
+---
 
 ## Быстрый старт
 
-### 1. Supabase
+Подробная инструкция с картинками и объяснениями — в файле **[GUIDE.md](./GUIDE.md)**.
 
-```bash
-# применить миграции к своему проекту (через Supabase CLI или Dashboard → SQL editor)
-supabase db push
+Краткий план:
+
+1. **Купи VPS** → подключись по SSH → установи Docker
+2. **Клонируй репозиторий** на сервер:
+   ```bash
+   git clone https://github.com/nojkinrs124/family-assistant.git
+   cd family-assistant
+   ```
+3. **Создай файл `.env`** с токенами (шаблон: `.env.example`)
+4. **Авторизуйся в Ленте** — один раз вручную через браузер (подробно в [GUIDE.md → Часть 5](./GUIDE.md))
+5. **Запусти бота:**
+   ```bash
+   docker compose up -d --build
+   ```
+6. Напиши `/start` своему боту в Telegram 🎉
+
+---
+
+## Структура проекта
+
+```
+family-assistant/
+├── telegram-bot/        ← Telegram-бот
+├── mcp-servers/
+│   └── lenta-mcp/       ← Автоматизация сайта Ленты
+├── supabase/migrations/ ← База данных
+├── docker-compose.yml   ← Запуск одной командой
+├── .env.example         ← Шаблон настроек
+├── GUIDE.md             ← Полная инструкция для новичка
+└── DEPLOY.md            ← Краткий деплой-справочник
 ```
 
-### 2. Lenta MCP — сессия и проверка
+---
 
-```bash
-cd mcp-servers/lenta-mcp
-npm install
-npx playwright install chromium
-npm run auth        # один раз: логинишься вручную, вводишь SMS
-```
+## Технологии
 
-Реальные CSS-селекторы в `src/tools/*.js` и `src/index.js`-цепочке
-помечены `TODO` — их нужно поправить под текущую вёрстку сайта через
-DevTools (см. `docs/architecture.md` → "Известные ограничения").
+- **[Telegram](https://core.telegram.org/bots/api)** — интерфейс
+- **[OpenRouter](https://openrouter.ai/docs)** + GPT-4o-mini — понимает запросы
+- **[Playwright](https://playwright.dev)** — автоматизация браузера (Лента)
+- **[Supabase](https://supabase.com/docs)** — база данных (семьи, заказы, финансы)
+- **[Docker](https://docs.docker.com)** — запуск на сервере
 
-### 3. Telegram-бот
+---
 
-```bash
-cd telegram-bot
-npm install
-cp .env.example .env
-# вписать: TELEGRAM_BOT_TOKEN, OPENROUTER_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-npm start
-```
+## Документация
 
-При `/start` бот сам создаёт профиль по `telegram_id` и, если семьи ещё
-нет, создаёт её и назначает пользователя владельцем (`owner`) — вручную
-ничего заводить не нужно.
+| Файл | Содержание |
+|------|------------|
+| [GUIDE.md](./GUIDE.md) | Полная инструкция с нуля для новичка |
+| [DEPLOY.md](./DEPLOY.md) | Краткий справочник по деплою |
+| [.env.example](./.env.example) | Шаблон переменных окружения |
 
-## Статус / что дальше
+---
 
-- [x] Этап 1: миграция фундамента (families, profiles, family_members, settings, audit_logs, RLS)
-- [x] Telegram `/start`: автосоздание профиля и семьи, запись действий в audit_logs
-- [x] Lenta MCP: каркас (search / cart_add / checkout_link) — селекторы TODO
-- [x] Telegram-бот: Shopping Agent с tool-calling поверх MCP
-- [ ] Доработать реальные селекторы Ленты (нужен доступ к живому сайту)
-- [ ] Проверить экран оплаты (SMS/3-D Secure или в один клик)
-- [ ] Приглашение других участников семьи (второй пользователь в `family_members`)
-- [x] Этап 2 схема: shopping_lists, orders, stores, store_integrations — применены к проду
-- [ ] Этап 2 автоматизация: калибровка селекторов Ленты (блокер, нужен живой браузер)
-- [x] Этап 3 схема: accounts, categories (13 seed), transactions, budgets, savings_goals — применены к проду
-- [ ] Этап 4: карты/автооплата (реальный эквайринг)
+## Часто задаваемые вопросы
 
-Подробный план по шагам — в `docs/roadmap.md`.
+**Бот безопасен?**
+Да. Он работает от твоего аккаунта в Ленте и никогда не оплачивает заказы сам. Все секреты хранятся в `.env` только на твоём сервере.
 
-## Безопасность
+**Что если сессия в Ленте протухнет?**
+Примерно раз в месяц нужно повторить авторизацию — это занимает 5 минут. Подробно в [GUIDE.md](./GUIDE.md).
 
-- `session-state.json` (сохранённая сессия Ленты) — секрет уровня пароля,
-  никогда не коммитится (см. `.gitignore`), в проде — Supabase Vault.
-- `SUPABASE_SERVICE_ROLE_KEY` обходит RLS — живёт только в `.env` на
-  сервере бота, никогда не в клиентском коде и не в git.
-- `.env` с токенами — не коммитится.
-- RLS включён на всех таблицах с первой миграции.
-- Карта оплаты нигде в этом репозитории не хранится — оплата всегда
-  завершается пользователем вручную в интерфейсе магазина.
+**Можно добавить другой магазин?**
+Архитектура это поддерживает — каждый магазин это отдельный MCP-сервер.
+
+---
+
+## Лицензия
+
+MIT — делай что хочешь.
