@@ -1,66 +1,51 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import path from 'path';
 
-/**
- * Конфигурация подключённых MCP-серверов (магазинов).
- * Лента — наш собственный (browser automation), запускается как
- * локальный сабпроцесс. ВкусВилл — официальный удалённый MCP
- * (см. https://mcp.vkusvill.ru/mcp), подключается по HTTP/SSE —
- * добавить, когда семья окажется в городе, где он есть.
- */
-const SERVERS = [
-  {
-    id: 'lenta',
+// Путь к lenta-mcp: в docker — монтируется как /app/lenta-mcp/src/index.js
+// Локально — ../mcp-servers/lenta-mcp/src/index.js
+const LENTA_MCP_PATH = process.env.LENTA_MCP_PATH
+  || path.join(process.cwd(), '../mcp-servers/lenta-mcp/src/index.js');
+
+const LENTA_SESSION_FILE = process.env.LENTA_SESSION_FILE
+  || path.join(process.cwd(), '../mcp-servers/lenta-mcp/session-state.json');
+
+let _client = null;
+
+async function getClient() {
+  if (_client) return _client;
+
+  const transport = new StdioClientTransport({
     command: 'node',
-    args: [new URL('../../mcp-servers/lenta-mcp/src/index.js', import.meta.url).pathname],
-  },
-  // {
-  //   id: 'vkusvill',
-  //   url: 'https://mcp.vkusvill.ru/mcp', // подключить через StreamableHTTPClientTransport
-  // },
-];
+    args: [LENTA_MCP_PATH],
+    env: {
+      ...process.env,
+      LENTA_SESSION_FILE,
+    },
+  });
 
-const clients = new Map();
-
-export async function initMcpPool() {
-  for (const server of SERVERS) {
-    const transport = new StdioClientTransport({
-      command: server.command,
-      args: server.args,
-    });
-    const client = new Client({ name: `family-assistant-${server.id}`, version: '0.1.0' });
-    await client.connect(transport);
-    clients.set(server.id, client);
-    console.log(`MCP подключён: ${server.id}`);
-  }
+  _client = new Client({ name: 'telegram-bot', version: '1.0.0' }, {});
+  await _client.connect(transport);
+  console.log('[mcpPool] Подключён к lenta-mcp');
+  return _client;
 }
 
-/** Собирает единый список тулов со всех подключённых MCP-серверов
- *  в формате, который принимает Anthropic API (tools[]). */
 export async function listAllTools() {
-  const tools = [];
-  for (const [serverId, client] of clients) {
-    const { tools: serverTools } = await client.listTools();
-    for (const t of serverTools) {
-      tools.push({
-        name: t.name,
-        description: t.description,
-        input_schema: t.inputSchema,
-        _serverId: serverId, // внутреннее поле, не уходит в API
-      });
-    }
-  }
+  const client = await getClient();
+  const { tools } = await client.listTools();
   return tools;
 }
 
-export async function callTool(serverId, name, args) {
-  const client = clients.get(serverId);
-  if (!client) throw new Error(`MCP-сервер не найден: ${serverId}`);
-  return client.callTool({ name, arguments: args });
+export async function callTool(name, args) {
+  const client = await getClient();
+  const result = await client.callTool({ name, arguments: args });
+  // MCP возвращает массив content-блоков — сводим к строке
+  return result.content
+    .map(b => (b.type === 'text' ? b.text : JSON.stringify(b)))
+    .join('\n');
 }
 
-/** По имени тула находит, к какому серверу он относится (нужно для callTool). */
-export function findServerForTool(tools, toolName) {
-  const tool = tools.find((t) => t.name === toolName);
-  return tool?._serverId;
+export async function findServerForTool(toolName) {
+  const tools = await listAllTools();
+  return tools.find(t => t.name === toolName) ? 'lenta-mcp' : null;
 }

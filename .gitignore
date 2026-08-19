@@ -1,4 +1,7 @@
-node_modules/
 .env
+node_modules/
+**/node_modules/
+session-state.json
+**/session-state.json
 *.log
-mcp-servers/lenta-mcp/session-state.json
+.DS_Store

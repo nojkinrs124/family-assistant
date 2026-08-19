@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+  lenta-mcp:
+    build:
+      context: ./mcp-servers/lenta-mcp
+      dockerfile: Dockerfile
+    container_name: lenta-mcp
+    restart: unless-stopped
+    volumes:
+      - lenta-session:/app/session   # сессия Ленты (persistent)
+    environment:
+      LENTA_SESSION_FILE: /app/session/session-state.json
+    # MCP сервер общается через stdio — telegram-bot запускает его как child process
+    # поэтому он НЕ слушает порт; контейнер просто держит зависимости/образ
+    # telegram-bot монтирует исходники через volume и запускает node напрямую
+
+  telegram-bot:
+    build:
+      context: ./telegram-bot
+      dockerfile: Dockerfile
+    container_name: telegram-bot
+    restart: unless-stopped
+    depends_on:
+      - lenta-mcp
+    volumes:
+      - lenta-session:/app/lenta-session   # тот же volume — для запуска lenta-mcp как subprocess
+      - ./mcp-servers/lenta-mcp:/app/lenta-mcp:ro  # исходники MCP сервера
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      LENTA_MCP_PATH: /app/lenta-mcp/src/index.js
+      LENTA_SESSION_FILE: /app/lenta-session/session-state.json
+    env_file:
+      - .env
+
+volumes:
+  lenta-session:
+    driver: local
