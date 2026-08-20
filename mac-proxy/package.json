@@ -1,0 +1,5 @@
+{
+  "name": "lenta-proxy",
+  "type": "module",
+  "scripts": { "start": "node proxy.js" }
+}
